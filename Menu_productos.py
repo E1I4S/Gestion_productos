@@ -1,121 +1,87 @@
+import json
+import os
+
 productos = []
 
-def cargar_datos():
-    global productos
-    try:
-        with open("productos.txt", "r") as archivo:
-            for linea in archivo:
-                if linea.strip(): 
-                    try:
-                        nombre, precio, cantidad = linea.strip().split(";")
-                        producto = {
-                            "nombre": nombre,
-                            "precio": float(precio),
-                            "cantidad": int(cantidad)
-                        }
-                        productos.append(producto)
-                    except ValueError:
-                        print(f"Error al cargar el producto desde la línea: {linea}")
-        print("Datos cargados correctamente.")
-    except FileNotFoundError:
-        print("Archivo no encontrado. Iniciando con lista vacía.")
-
-def guardar_datos():
-    with open("productos.txt", "w") as archivo:
-        for producto in productos:
-            linea = f"{producto['nombre']};{producto['precio']};{producto['cantidad']}\n"
-            archivo.write(linea)
-    print("Datos guardados correctamente.")
+def crear_producto(nombre, precio, cantidad):
+    return {"nombre": nombre, "precio": precio, "cantidad": cantidad}
 
 def añadir_producto():
-    nombre = input("Introduce el nombre del producto: ").strip()
-    while True:
-        try:
-            precio = float(input("Introduce el precio del producto: "))
-            break
-        except ValueError:
-            print("Error: Debes introducir un número válido para el precio.")
-
-    while True:
-        try:
-            cantidad = int(input("Introduce la cantidad disponible del producto: "))
-            break
-        except ValueError:
-            print("Error: Debes introducir un número válido para la cantidad.")
-
-    producto = {
-        "nombre": nombre,
-        "precio": precio,
-        "cantidad": cantidad
-    }
-    productos.append(producto)
-    print(f"Producto '{nombre}' añadido correctamente.")
+    try:
+        nombre = input("Introduce el nombre del producto: ")
+        precio = float(input("Introduce el precio del producto: "))
+        cantidad = int(input("Introduce la cantidad del producto: "))
+        producto = crear_producto(nombre, precio, cantidad)
+        productos.append(producto)
+        print(f"Producto '{nombre}' añadido correctamente.")
+    except ValueError:
+        print("Error: Precio y cantidad deben ser valores numéricos.")
 
 def ver_productos():
-    if productos:
-        for idx, producto in enumerate(productos, 1):
-            print(f"{idx}. {producto['nombre']} - Precio: {producto['precio']} - Cantidad: {producto['cantidad']}")
-    else:
+    if len(productos) == 0:
         print("No hay productos en la lista.")
+    else:
+        for idx, producto in enumerate(productos, 1):
+            print(f"{idx}. {producto['nombre']} - Precio: ${producto['precio']} - Cantidad: {producto['cantidad']}")
 
 def actualizar_producto():
     ver_productos()
-    if productos:
-        while True:
-            try:
-                indice = int(input("Introduce el número del producto a actualizar: "))
-                if 1 <= indice <= len(productos):
-                    producto = productos[indice - 1]
-                    print(f"Actualizando el producto '{producto['nombre']}'.")
+    if len(productos) == 0:
+        return
 
-                    nuevo_nombre = input(f"Introduce el nuevo nombre (actual: {producto['nombre']}): ").strip() or producto['nombre']
+    try:
+        indice = int(input("Selecciona el número del producto a actualizar: ")) - 1
+        if 0 <= indice < len(productos):
+            nombre = input(f"Introduce el nuevo nombre del producto (actual: {productos[indice]['nombre']}): ") or productos[indice]['nombre']
+            precio = input(f"Introduce el nuevo precio (actual: {productos[indice]['precio']}): ")
+            precio = float(precio) if precio else productos[indice]['precio']
+            cantidad = input(f"Introduce la nueva cantidad (actual: {productos[indice]['cantidad']}): ")
+            cantidad = int(cantidad) if cantidad else productos[indice]['cantidad']
 
-                    while True:
-                        try:
-                            nuevo_precio = input(f"Introduce el nuevo precio (actual: {producto['precio']}): ")
-                            nuevo_precio = float(nuevo_precio) if nuevo_precio else producto['precio']
-                            break
-                        except ValueError:
-                            print("Error: Debes introducir un número válido para el precio.")
-
-                    while True:
-                        try:
-                            nueva_cantidad = input(f"Introduce la nueva cantidad (actual: {producto['cantidad']}): ")
-                            nueva_cantidad = int(nueva_cantidad) if nueva_cantidad else producto['cantidad']
-                            break
-                        except ValueError:
-                            print("Error: Debes introducir un número válido para la cantidad.")
-
-                    productos[indice - 1] = {
-                        "nombre": nuevo_nombre,
-                        "precio": nuevo_precio,
-                        "cantidad": nueva_cantidad
-                    }
-                    print(f"Producto '{nuevo_nombre}' actualizado correctamente.")
-                    break
-                else:
-                    print("Error: Número de producto fuera de rango.")
-            except ValueError:
-                print("Error: Debes introducir un número válido.")
+            productos[indice] = crear_producto(nombre, precio, cantidad)
+            print(f"Producto '{nombre}' actualizado correctamente.")
+        else:
+            print("Error: Número de producto inválido.")
+    except ValueError:
+        print("Error: Entrada no válida. Asegúrate de introducir un número para seleccionar el producto.")
 
 def eliminar_producto():
     ver_productos()
-    if productos:
-        while True:
-            try:
-                indice = int(input("Introduce el número del producto a eliminar: "))
-                if 1 <= indice <= len(productos):
-                    producto_eliminado = productos.pop(indice - 1)
-                    print(f"Producto '{producto_eliminado['nombre']}' eliminado correctamente.")
-                    break
-                else:
-                    print("Error: Número de producto fuera de rango.")
-            except ValueError:
-                print("Error: Debes introducir un número válido.")
+    if len(productos) == 0:
+        return
+
+    try:
+        indice = int(input("Selecciona el número del producto a eliminar: ")) - 1
+        if 0 <= indice < len(productos):
+            eliminado = productos.pop(indice)
+            print(f"Producto '{eliminado['nombre']}' eliminado correctamente.")
+        else:
+            print("Error: Número de producto inválido.")
+    except ValueError:
+        print("Error: Entrada no válida. Asegúrate de introducir un número para seleccionar el producto.")
+
+def guardar_datos():
+    try:
+        with open("productos.txt", "w") as archivo:
+            json.dump(productos, archivo)
+        print("Datos guardados correctamente en 'productos.txt'.")
+    except Exception as e:
+        print(f"Error al guardar los datos: {e}")
+
+def cargar_datos():
+    if os.path.exists("productos.txt"):
+        try:
+            with open("productos.txt", "r") as archivo:
+                global productos
+                productos = json.load(archivo)
+            print("Datos cargados correctamente desde 'productos.txt'.")
+        except Exception as e:
+            print(f"Error al cargar los datos: {e}")
+    else:
+        print("No se encontró el archivo 'productos.txt'. Se iniciará con una lista vacía.")
 
 def menu():
-    cargar_datos()
-
+    cargar_datos() 
     while True:
         print("\n--- Menú ---")
         print("1: Añadir producto")
@@ -124,7 +90,7 @@ def menu():
         print("4: Eliminar producto")
         print("5: Guardar datos y salir")
 
-        opcion = input("Selecciona una opción: ")
+        opcion = input("Selecciona una opción: ").strip()
 
         if opcion == '1':
             añadir_producto()
@@ -136,8 +102,10 @@ def menu():
             eliminar_producto()
         elif opcion == '5':
             guardar_datos()
+            print("Saliendo del programa...")
             break
         else:
-            print("Por favor, selecciona una opción válida.")
+            print("Por favor, selecciona una opción válida (1-5).")
 
-menu()
+if __name__ == "__main__":
+    menu()
