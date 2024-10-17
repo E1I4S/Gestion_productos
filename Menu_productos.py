@@ -5,29 +5,30 @@ def cargar_datos():
     try:
         with open("productos.txt", "r") as archivo:
             for linea in archivo:
-                nombre, precio, cantidad = linea.strip().split(",")
-                producto = {
-                    "nombre": nombre,
-                    "precio": float(precio),
-                    "cantidad": int(cantidad)
-                }
-                productos.append(producto)
+                if linea.strip(): 
+                    try:
+                        nombre, precio, cantidad = linea.strip().split(";")
+                        producto = {
+                            "nombre": nombre,
+                            "precio": float(precio),
+                            "cantidad": int(cantidad)
+                        }
+                        productos.append(producto)
+                    except ValueError:
+                        print(f"Error al cargar el producto desde la línea: {linea}")
         print("Datos cargados correctamente.")
     except FileNotFoundError:
         print("Archivo no encontrado. Iniciando con lista vacía.")
-    except ValueError:
-        print("El archivo contiene datos corruptos. Iniciando con lista vacía.")
-        productos = []
 
 def guardar_datos():
     with open("productos.txt", "w") as archivo:
         for producto in productos:
-            linea = f"{producto['nombre']},{producto['precio']},{producto['cantidad']}\n"
+            linea = f"{producto['nombre']};{producto['precio']};{producto['cantidad']}\n"
             archivo.write(linea)
     print("Datos guardados correctamente.")
 
 def añadir_producto():
-    nombre = input("Introduce el nombre del producto: ")
+    nombre = input("Introduce el nombre del producto: ").strip()
     while True:
         try:
             precio = float(input("Introduce el precio del producto: "))
@@ -67,7 +68,7 @@ def actualizar_producto():
                     producto = productos[indice - 1]
                     print(f"Actualizando el producto '{producto['nombre']}'.")
 
-                    nuevo_nombre = input(f"Introduce el nuevo nombre (actual: {producto['nombre']}): ") or producto['nombre']
+                    nuevo_nombre = input(f"Introduce el nuevo nombre (actual: {producto['nombre']}): ").strip() or producto['nombre']
 
                     while True:
                         try:
